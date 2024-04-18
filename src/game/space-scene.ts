@@ -1,24 +1,32 @@
 import * as THREE from "three";
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { GameLoader } from "../loaders/game-loader";
+import { Player } from "./player";
+import { KeyboardListener } from "../listeners/keyboard-listener";
+import { AsteroidManager } from "./asteroid-manager";
 
 export class SpaceScene {
   private scene = new THREE.Scene();
   private camera = new THREE.PerspectiveCamera();
-  private controls: OrbitControls;
+
+  private player: Player;
+  private asteroidManager: AsteroidManager;
 
   constructor(
     private renderer: THREE.WebGLRenderer,
-    private gameLoader: GameLoader
+    private gameLoader: GameLoader,
+    private keyboardListener: KeyboardListener
   ) {
     this.setupCamera();
     this.setupLights();
     this.setupObjects();
     this.setupSkybox();
 
-    this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-    this.controls.enableDamping = true;
-    this.controls.target.set(0, 1, 0);
+    const playerShip = this.gameLoader.modelLoader.get("ship-fighter-05");
+    this.player = new Player(playerShip, this.keyboardListener);
+    this.player.setup();
+    this.scene.add(this.player.ship);
+
+    this.asteroidManager = new AsteroidManager(this.gameLoader, this.scene);
   }
 
   getCamera() {
@@ -26,7 +34,11 @@ export class SpaceScene {
   }
 
   update(dt: number) {
-    this.controls.update();
+    this.player.update(dt);
+
+    // Being far too complicateed even for the lesson - just spawn at top and move straight down
+    // Keep circle/alt spawning for further tasks
+    //this.asteroidManager.update(dt);
 
     this.renderer.render(this.scene, this.camera);
   }
@@ -36,7 +48,8 @@ export class SpaceScene {
     this.camera.far = 500;
     const canvas = this.renderer.domElement;
     this.camera.aspect = canvas.clientWidth / canvas.clientHeight;
-    this.camera.position.set(0, 1.5, 3);
+    this.camera.position.set(0, 80, 3);
+    this.camera.lookAt(0, 0, 0);
   }
 
   private setupLights() {

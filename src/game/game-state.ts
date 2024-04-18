@@ -2,10 +2,12 @@ import * as THREE from "three";
 
 import { GameLoader } from "../loaders/game-loader";
 import { SpaceScene } from "./space-scene";
+import { KeyboardListener } from "../listeners/keyboard-listener";
 
 export class GameState {
   private renderer: THREE.WebGLRenderer;
   private clock = new THREE.Clock();
+  private keyboardListener = new KeyboardListener();
 
   private spaceScene: SpaceScene;
 
@@ -23,7 +25,11 @@ export class GameState {
     const canvasRoot = document.getElementById("canvas-root");
     canvasRoot?.appendChild(canvas);
 
-    this.spaceScene = new SpaceScene(this.renderer, this.gameLoader);
+    this.spaceScene = new SpaceScene(
+      this.renderer,
+      this.gameLoader,
+      this.keyboardListener
+    );
 
     // Handle any canvas resize events
     window.addEventListener("resize", this.onCanvasResize);
