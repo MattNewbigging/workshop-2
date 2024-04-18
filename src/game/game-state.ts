@@ -1,15 +1,13 @@
 import * as THREE from "three";
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 
 import { GameLoader } from "../loaders/game-loader";
-import { addGui } from "../utils/utils";
-import { FirstScene } from "./first-scene";
+import { SpaceScene } from "./space-scene";
 
 export class GameState {
   private renderer: THREE.WebGLRenderer;
   private clock = new THREE.Clock();
 
-  private firstScene: FirstScene;
+  private spaceScene: SpaceScene;
 
   constructor(private gameLoader: GameLoader) {
     // Setup renderer
@@ -25,7 +23,7 @@ export class GameState {
     const canvasRoot = document.getElementById("canvas-root");
     canvasRoot?.appendChild(canvas);
 
-    this.firstScene = new FirstScene(this.renderer, this.gameLoader);
+    this.spaceScene = new SpaceScene(this.renderer, this.gameLoader);
 
     // Handle any canvas resize events
     window.addEventListener("resize", this.onCanvasResize);
@@ -37,7 +35,7 @@ export class GameState {
 
   private onCanvasResize = () => {
     const canvas = this.renderer.domElement;
-    const camera = this.firstScene.getCamera();
+    const camera = this.spaceScene.getCamera();
 
     this.renderer.setSize(canvas.clientWidth, canvas.clientHeight, false);
 
@@ -53,6 +51,6 @@ export class GameState {
 
     const dt = this.clock.getDelta();
 
-    this.firstScene.update(dt);
+    this.spaceScene.update(dt);
   };
 }

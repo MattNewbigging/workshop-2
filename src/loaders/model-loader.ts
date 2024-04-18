@@ -1,16 +1,13 @@
 import * as THREE from "three";
 import * as SkeletonUtils from "three/examples/jsm/utils/SkeletonUtils";
-import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader";
 import { TextureLoader } from "./texture-loader";
 
 export class ModelLoader {
   doneLoading = false;
   readonly models = new Map<string, THREE.Object3D>();
-
+  readonly textureLoader = new TextureLoader();
   private loadingManager = new THREE.LoadingManager();
-
-  private textureLoader = new TextureLoader();
 
   get(modelName: string): THREE.Object3D {
     // Return the model if found
@@ -42,52 +39,63 @@ export class ModelLoader {
   }
 
   private loadModels = () => {
-    const gltfLoader = new GLTFLoader(this.loadingManager);
-    this.loadKenneyBox(gltfLoader);
-
     const fbxLoader = new FBXLoader(this.loadingManager);
-    this.loadSyntyModel(fbxLoader);
+
+    // Load all similar models in the same manner
+    const nameUrlMap = this.getNameUrlMap();
+    nameUrlMap.forEach((url, name) => {
+      fbxLoader.load(url, (group) => {
+        this.applyTexture(name, group);
+        this.scaleSyntyModel(group);
+        this.models.set(name, group);
+      });
+    });
   };
 
-  private loadKenneyBox(loader: GLTFLoader) {
-    const boxUrl = new URL("/box-small.glb", import.meta.url).href;
-    loader.load(boxUrl, (gltf) => {
-      // Traverse the gltf scene
-      gltf.scene.traverse((child) => {
-        const node = child as THREE.Mesh;
-        if (node.isMesh) {
-          // https://kenney.nl/ assets need their metalness reducing to render correctly
-          const mat = node.material as THREE.MeshStandardMaterial;
-          mat.metalness = 0;
+  private getNameUrlMap() {
+    const nameUrlMap = new Map<string, string>();
+
+    const fighter5Url = new URL("/models/ship_fighter_05.fbx", import.meta.url)
+      .href;
+    nameUrlMap.set("ship-fighter-05", fighter5Url);
+
+    const asteroid01Url = new URL("/models/asteroid_01.fbx", import.meta.url)
+      .href;
+    nameUrlMap.set("asteroid-01", asteroid01Url);
+
+    const asteroid02Url = new URL("/models/asteroid_02.fbx", import.meta.url)
+      .href;
+    nameUrlMap.set("asteroid-02", asteroid02Url);
+
+    const asteroid03Url = new URL("/models/asteroid_03.fbx", import.meta.url)
+      .href;
+    nameUrlMap.set("asteroid-03", asteroid03Url);
+
+    const asteroid04Url = new URL("/models/asteroid_04.fbx", import.meta.url)
+      .href;
+    nameUrlMap.set("asteroid-04", asteroid04Url);
+
+    const asteroid05Url = new URL("/models/asteroid_05.fbx", import.meta.url)
+      .href;
+    nameUrlMap.set("asteroid-05", asteroid05Url);
+
+    return nameUrlMap;
+  }
+
+  private applyTexture(name: string, group: THREE.Group) {
+    // Get the right texture for this model
+    let texture = this.textureLoader.get("atlas-1a");
+
+    if (texture) {
+      group.traverse((child) => {
+        if (child instanceof THREE.Mesh) {
+          const mat = child.material as THREE.MeshLambertMaterial;
+          mat.map = texture;
+          // Synty models have this true by default, making model black
+          mat.vertexColors = false;
         }
       });
-
-      this.models.set("box", gltf.scene);
-    });
-  }
-
-  private loadSyntyModel(loader: FBXLoader) {
-    const url = new URL("/bandit.fbx", import.meta.url).href;
-    loader.load(url, (group) => {
-      const texture = this.textureLoader.get("bandit");
-      if (texture) {
-        this.applyModelTexture(group, texture);
-      }
-
-      this.scaleSyntyModel(group);
-      this.models.set("bandit", group);
-    });
-  }
-
-  private applyModelTexture(group: THREE.Group, texture: THREE.Texture) {
-    group.traverse((child) => {
-      if (child instanceof THREE.Mesh) {
-        const mat = child.material as THREE.MeshLambertMaterial;
-        mat.map = texture;
-        // Synty models have this true by default, making model black
-        mat.vertexColors = false;
-      }
-    });
+    }
   }
 
   private scaleSyntyModel(group: THREE.Group) {

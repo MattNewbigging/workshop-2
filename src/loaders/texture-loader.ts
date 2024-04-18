@@ -24,15 +24,49 @@ export class TextureLoader {
 
   private loadTextures() {
     const loader = new THREE.TextureLoader(this.loadingManager);
-    this.loadBanditTexture(loader);
+
+    // Get a map of all urls and names for each texture to load in the same manner
+    const nameUrlMap = this.getNameUrlMap();
+    nameUrlMap.forEach((url, name) => {
+      loader.load(url, (texture) => {
+        texture.encoding = THREE.sRGBEncoding;
+        this.textures.set(name, texture);
+      });
+    });
+
+    // Load other textures with more specific configs
+    this.loadSkybox();
   }
 
-  private loadBanditTexture(loader: THREE.TextureLoader) {
-    const url = new URL("/bandit-texture.png", import.meta.url).href;
-    loader.load(url, (texture) => {
-      // So colours don't look washed out
-      texture.encoding = THREE.sRGBEncoding;
-      this.textures.set("bandit", texture);
-    });
+  private getNameUrlMap() {
+    const nameUrlMap = new Map<string, string>();
+
+    const atlast1aUrl = new URL("/textures/atlas_1A.png", import.meta.url).href;
+    nameUrlMap.set("atlas-1a", atlast1aUrl);
+
+    return nameUrlMap;
+  }
+
+  private loadSkybox() {
+    const loader = new THREE.CubeTextureLoader(this.loadingManager);
+    const backUrl = new URL("/textures/skybox_03_back.png", import.meta.url)
+      .href;
+    const downUrl = new URL("/textures/skybox_03_down.png", import.meta.url)
+      .href;
+    const frontUrl = new URL("/textures/skybox_03_front.png", import.meta.url)
+      .href;
+    const leftUrl = new URL("/textures/skybox_03_left.png", import.meta.url)
+      .href;
+    const rightUrl = new URL("/textures/skybox_03_right.png", import.meta.url)
+      .href;
+    const upUrl = new URL("/textures/skybox_03_up.png", import.meta.url).href;
+
+    // +x, -x, +y, -y, +z, -z
+    // front, back, up, down, left, right
+    // except synty assets are stupid, so it is:
+    const urls = [leftUrl, rightUrl, upUrl, downUrl, frontUrl, backUrl];
+
+    const cubeTexture = loader.load(urls);
+    this.textures.set("skybox", cubeTexture);
   }
 }
