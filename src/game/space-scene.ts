@@ -36,9 +36,7 @@ export class SpaceScene {
   update(dt: number) {
     this.player.update(dt);
 
-    // Being far too complicateed even for the lesson - just spawn at top and move straight down
-    // Keep circle/alt spawning for further tasks
-    //this.asteroidManager.update(dt);
+    this.asteroidManager.update(dt);
 
     this.renderer.render(this.scene, this.camera);
   }
@@ -62,7 +60,8 @@ export class SpaceScene {
   }
 
   private setupObjects() {
-    //
+    const axesHelper = new THREE.AxesHelper(50);
+    this.scene.add(axesHelper);
   }
 
   private setupSkybox() {
