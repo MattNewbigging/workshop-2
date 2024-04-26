@@ -86,7 +86,7 @@ export class ModelLoader {
     // Get the right texture for this model
     let texture = this.textureLoader.get("atlas-1a");
 
-    if (texture !== undefined) {
+    if (texture) {
       group.traverse((child) => {
         if (child instanceof THREE.Mesh) {
           const mat = child.material as THREE.MeshLambertMaterial;

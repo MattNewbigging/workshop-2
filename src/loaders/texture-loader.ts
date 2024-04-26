@@ -6,8 +6,10 @@ export class TextureLoader {
   private textures = new Map<string, THREE.Texture>();
   private loadingManager = new THREE.LoadingManager();
 
-  get(name: string) {
-    return this.textures.get(name);
+  get(name: string): THREE.Texture | null {
+    const texture = this.textures.get(name);
+
+    return texture ?? null;
   }
 
   load(onLoad: () => void) {
