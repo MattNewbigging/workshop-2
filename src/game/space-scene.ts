@@ -41,29 +41,7 @@ export class SpaceScene {
     this.setupCamera();
     this.setupLights();
     this.setupSkybox();
-
-    // Setup player
-    const playerShip = this.gameLoader.modelLoader.get("ship-fighter-05");
-    playerShip.rotateY(Math.PI);
-
-    const mesh = playerShip.children[0] as THREE.Mesh;
-    mesh.geometry.computeBoundingSphere();
-    const colliderRadius = mesh.geometry.boundingSphere
-      ? mesh.geometry.boundingSphere.radius * this.colliderRadiusModifer
-      : 9;
-
-    this.player = {
-      object: playerShip,
-      colliderRadius,
-      direction: new THREE.Vector3(),
-      velocity: new THREE.Vector3(),
-      speed: 50,
-      acceleration: 0,
-      accRampTime: 0,
-      accRampSpeed: 1.5,
-      accRampDir: 0,
-    };
-    this.scene.add(playerShip);
+    this.player = this.setupPlayer();
   }
 
   getCamera() {
@@ -101,6 +79,35 @@ export class SpaceScene {
     if (skyboxTexture) {
       this.scene.background = skyboxTexture;
     }
+  }
+
+  private setupPlayer(): Player {
+    // Make the model face the right way
+    const playerShip = this.gameLoader.modelLoader.get("ship-fighter-05");
+    playerShip.rotateY(Math.PI);
+
+    this.scene.add(playerShip);
+
+    // Calculate collider radius
+    const mesh = playerShip.children[0] as THREE.Mesh;
+    mesh.geometry.computeBoundingSphere();
+    const boundingSphere = mesh.geometry.boundingSphere;
+    const colliderRadius = boundingSphere
+      ? boundingSphere.radius * this.colliderRadiusModifer
+      : 7.8;
+
+    // Return player object with default values
+    return {
+      object: playerShip,
+      colliderRadius,
+      direction: new THREE.Vector3(),
+      velocity: new THREE.Vector3(),
+      speed: 50,
+      acceleration: 0,
+      accRampTime: 0,
+      accRampSpeed: 1.5,
+      accRampDir: 0,
+    };
   }
 
   private updatePlayer(dt: number) {
@@ -201,9 +208,8 @@ export class SpaceScene {
     // Collider radius
     const mesh = asteroid.children[0] as THREE.Mesh;
     mesh.geometry.computeBoundingSphere();
-    const colliderRadius = mesh.geometry.boundingSphere
-      ? mesh.geometry.boundingSphere.radius * this.colliderRadiusModifer
-      : 3;
+    const boundingSphereRadius = mesh.geometry.boundingSphere?.radius ?? 3;
+    const colliderRadius = boundingSphereRadius * this.colliderRadiusModifer;
 
     // Random start position along the top of the screen
     const x = randomRange(-100, 100);
