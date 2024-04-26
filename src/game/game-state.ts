@@ -5,11 +5,11 @@ import { SpaceScene } from "./space-scene";
 import { KeyboardListener } from "../listeners/keyboard-listener";
 
 export class GameState {
+  spaceScene: SpaceScene;
+
   private renderer: THREE.WebGLRenderer;
   private clock = new THREE.Clock();
   private keyboardListener = new KeyboardListener();
-
-  private spaceScene: SpaceScene;
 
   constructor(private gameLoader: GameLoader) {
     // Setup renderer

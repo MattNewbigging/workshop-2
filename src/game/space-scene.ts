@@ -4,6 +4,7 @@ import { GameLoader } from "../loaders/game-loader";
 import { KeyboardListener } from "../listeners/keyboard-listener";
 import { clamp } from "three/src/math/MathUtils";
 import { easeInSine, randomRange } from "../utils/math";
+import { makeAutoObservable, observable } from "mobx";
 
 interface Player {
   object: THREE.Object3D;
@@ -15,6 +16,7 @@ interface Player {
   accRampTime: number;
   accRampSpeed: number;
   accRampDir: number;
+  health: number;
 }
 
 interface Asteroid {
@@ -25,6 +27,8 @@ interface Asteroid {
 }
 
 export class SpaceScene {
+  @observable gameOver = false;
+
   private scene = new THREE.Scene();
   private camera = new THREE.PerspectiveCamera();
 
@@ -38,6 +42,8 @@ export class SpaceScene {
     private gameLoader: GameLoader,
     private keyboardListener: KeyboardListener
   ) {
+    makeAutoObservable(this);
+
     this.setupCamera();
     this.setupLights();
     this.setupSkybox();
@@ -49,11 +55,36 @@ export class SpaceScene {
   }
 
   update(dt: number) {
+    // Check for end game condition
+    if (this.player.health <= 0) {
+      console.log("game over");
+      this.gameOver = true;
+      return;
+    }
+
     this.updatePlayer(dt);
     this.updateAsteroids(dt);
 
     this.renderer.render(this.scene, this.camera);
   }
+
+  reset = () => {
+    // Reset player values
+    this.player.object.position.set(0, 0, 0);
+    this.setPlayerEmissive(0);
+    this.player.acceleration = 0;
+    this.player.accRampTime = 0;
+    this.player.accRampDir = 0;
+    this.player.health = 100;
+
+    // Reset asteroids
+    for (let i = this.asteroids.length; i--; ) {
+      this.destroyAsteroid(i);
+    }
+    this.timeToNextAsteroid = 0;
+
+    this.gameOver = false;
+  };
 
   private setupCamera() {
     this.camera.fov = 75;
@@ -85,7 +116,6 @@ export class SpaceScene {
     // Make the model face the right way
     const playerShip = this.gameLoader.modelLoader.get("ship-fighter-05");
     playerShip.rotateY(Math.PI);
-
     this.scene.add(playerShip);
 
     // Calculate collider radius
@@ -95,6 +125,11 @@ export class SpaceScene {
     const colliderRadius = boundingSphere
       ? boundingSphere.radius * this.colliderRadiusModifer
       : 7.8;
+
+    // Setup emissive colour
+    const material = mesh.material as THREE.MeshLambertMaterial;
+    material.emissive = new THREE.Color("red");
+    material.emissiveIntensity = 0;
 
     // Return player object with default values
     return {
@@ -107,6 +142,7 @@ export class SpaceScene {
       accRampTime: 0,
       accRampSpeed: 1.5,
       accRampDir: 0,
+      health: 100,
     };
   }
 
@@ -196,6 +232,7 @@ export class SpaceScene {
       const radii = colliderRadius + this.player.colliderRadius;
       if (distanceToPlayer <= radii) {
         this.destroyAsteroid(i);
+        this.damagePlayer();
       }
     }
   }
@@ -240,5 +277,20 @@ export class SpaceScene {
 
     this.asteroids.splice(index, 1);
     this.scene.remove(asteroid.object);
+  }
+
+  private damagePlayer() {
+    // Reduce health
+    this.player.health -= 20;
+
+    // Emissive value should increase as health decreases
+    const emissive = (100 - this.player.health) / 100;
+    this.setPlayerEmissive(emissive);
+  }
+
+  private setPlayerEmissive(value: number) {
+    const mesh = this.player.object.children[0] as THREE.Mesh;
+    const material = mesh.material as THREE.MeshLambertMaterial;
+    material.emissiveIntensity = value;
   }
 }
